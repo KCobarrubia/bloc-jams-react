@@ -11,9 +11,10 @@ class Album extends Component {
     this.state = {
       album: album,
       currentSong: album.songs[0],
-      isPlaying: false
+      isPlaying: false,
+      currentIndex: 0
     };
-
+    
     this.audioElement = document.createElement('audio');
     this.audioElement.src = album.songs[0].audioSrc;
   }
@@ -28,19 +29,38 @@ class Album extends Component {
     this.setState({ isPlaying: false});
   }
 
-  setSong(song) {
+  setSong(song,songIndex) {
     this.audioElement.src = song.audioSrc;
-    this.setState({ currentSong: song });
+    this.setState({ currentSong: song,currentIndex: songIndex});
   }
 
-  handleSongClick(song) {
+  handleSongClick(song,songIndex) {
     const isSameSong = this.state.currentSong === song;
+    const allsongs = this.state.album.songs.slice();
+    allsongs[songIndex].clicked = true;
+    allsongs[this.state.currentIndex].clicked = false;
+    this.setState({ album: { ...this.state.album, songs: allsongs } });
+
     if (this.state.isPlaying && isSameSong) {
       this.pause();
     } else {
-      if (!isSameSong) { this.setSong(song);}
+      if (!isSameSong) {
+        this.setSong(song,songIndex);
+      }
       this.play();
     }
+  }
+
+  handleSongHover(songIndex) {
+    const allsongs = this.state.album.songs.slice();
+    allsongs[songIndex].hover = true;
+    this.setState({ album: { ...this.state.album, songs: allsongs } });
+  }
+
+  handleSongLeave(songIndex) { 
+    const allsongs = this.state.album.songs.slice();
+    allsongs[songIndex].hover = false;
+    this.setState({ album: { ...this.state.album, songs: allsongs } });
   }
 
   render() {
@@ -68,10 +88,15 @@ class Album extends Component {
             </tr>
             {
               this.state.album.songs.map((song, songIndex) =>
-                <tr className="song" key={songIndex} onClick={() => this.handleSongClick(song)}>
-                  <td id="song-number" >{songIndex + 1}</td>
+                <tr className="song" key={songIndex} onClick={() => this.handleSongClick(song,songIndex)} onMouseEnter={() => this.handleSongHover(songIndex)} onMouseLeave={() => this.handleSongLeave(songIndex)}>
+                  <td id="song-number">
+                    {!song.hover && !song.clicked && <span className="not-playing">{songIndex + 1}</span>}
+                    {song.hover && !song.clicked && <span className="ion-md-play"></span>}
+                    {song.clicked && <span className="ion-md-pause"></span>}
+                  </td>
                   <td id="song-title">{song.title}</td>
                   <td id="song-duration">{song.duration}s</td>
+                  
                 </tr>
               )
             }
