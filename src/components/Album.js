@@ -37,18 +37,19 @@ class Album extends Component {
   handleSongClick(song,songIndex) {
     const isSameSong = this.state.currentSong === song;
     const allsongs = this.state.album.songs.slice();
-    allsongs[songIndex].clicked = true;
     allsongs[this.state.currentIndex].clicked = false;
-    this.setState({ album: { ...this.state.album, songs: allsongs } });
-
+    
     if (this.state.isPlaying && isSameSong) {
       this.pause();
     } else {
       if (!isSameSong) {
         this.setSong(song,songIndex);
       }
+      allsongs[songIndex].clicked = true;
       this.play();
     }
+    this.setState({ album: { ...this.state.album, songs: allsongs } });
+
   }
 
   handleSongHover(songIndex) {
