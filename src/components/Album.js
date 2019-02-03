@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import albumData from './../data/albums';
+import PlayerBar from './PlayerBar';
 
 class Album extends Component {
   constructor(props) {
@@ -8,11 +9,12 @@ class Album extends Component {
       return album.slug === this.props.match.params.slug
     });
 
+    album.songs.forEach((songRecord) => songRecord.hover = false);
+
     this.state = {
       album: album,
       currentSong: album.songs[0],
       isPlaying: false,
-      currentIndex: 0
     };
     
     this.audioElement = document.createElement('audio');
@@ -29,39 +31,35 @@ class Album extends Component {
     this.setState({ isPlaying: false});
   }
 
-  setSong(song,songIndex) {
+  setSong(song) {
     this.audioElement.src = song.audioSrc;
-    this.setState({ currentSong: song,currentIndex: songIndex});
+    this.setState({ currentSong: song });
   }
 
-  handleSongClick(song,songIndex) {
+  handleSongClick(song) {
     const isSameSong = this.state.currentSong === song;
-    const allsongs = this.state.album.songs.slice();
-    allsongs[this.state.currentIndex].clicked = false;
-    
     if (this.state.isPlaying && isSameSong) {
       this.pause();
     } else {
       if (!isSameSong) {
-        this.setSong(song,songIndex);
+        this.setSong(song);
       }
-      allsongs[songIndex].clicked = true;
       this.play();
     }
-    this.setState({ album: { ...this.state.album, songs: allsongs } });
-
   }
 
   handleSongHover(songIndex) {
-    const allsongs = this.state.album.songs.slice();
-    allsongs[songIndex].hover = true;
-    this.setState({ album: { ...this.state.album, songs: allsongs } });
+    const songs = this.state.album.songs.slice();
+    const song = songs[songIndex];
+    song.hover = true;
+    this.setState({ album: { ...this.state.album, songs: songs } });
   }
 
   handleSongLeave(songIndex) { 
-    const allsongs = this.state.album.songs.slice();
-    allsongs[songIndex].hover = false;
-    this.setState({ album: { ...this.state.album, songs: allsongs } });
+    const songs = this.state.album.songs.slice();
+    const song = songs[songIndex];
+    song.hover = false;
+    this.setState({ album: { ...this.state.album, songs: songs } });
   }
 
   render() {
@@ -89,11 +87,11 @@ class Album extends Component {
             </tr>
             {
               this.state.album.songs.map((song, songIndex) =>
-                <tr className="song" key={songIndex} onClick={() => this.handleSongClick(song,songIndex)} onMouseEnter={() => this.handleSongHover(songIndex)} onMouseLeave={() => this.handleSongLeave(songIndex)}>
+                <tr className="song" key={songIndex} onClick={() => this.handleSongClick(song)} onMouseEnter={() => this.handleSongHover(songIndex)} onMouseLeave={() => this.handleSongLeave(songIndex)}>
                   <td id="song-number">
-                    {!song.hover && !song.clicked && <span className="not-playing">{songIndex + 1}</span>}
-                    {song.hover && !song.clicked && <span className="ion-md-play"></span>}
-                    {song.clicked && <span className="ion-md-pause"></span>}
+                    {!song.hover && !(this.state.currentSong === song && this.state.isPlaying) && <span className="not-playing">{songIndex + 1}</span>}
+                    {song.hover && !(this.state.currentSong === song && this.state.isPlaying) && <span className="ion-md-play"></span>}
+                    {this.state.currentSong === song && this.state.isPlaying && <span className="ion-md-pause"></span>}
                   </td>
                   <td id="song-title">{song.title}</td>
                   <td id="song-duration">{song.duration}s</td>
@@ -103,6 +101,11 @@ class Album extends Component {
             }
           </tbody>
         </table>
+        <PlayerBar
+          isPlaying={this.state.isPlaying}
+          currentSong={this.state.currentSong}
+          handleSongClick={() => this.handleSongClick(this.state.currentSong)}
+        />
       </section>
     );
   }
